@@ -37,6 +37,10 @@
   scan: 'Скан', voiceBtn: 'Голос', takePhoto: 'Сделать фото', receipt: 'Чек прикреплён',
   importCsv: 'Импорт CSV', imported: 'Импортировано операций', everyDay: 'Каждый день', weekdays: 'Будни', weekends: 'Выходные',
   reminderOn: 'Напоминания включены',
+  // Voice input new strings
+  voiceInput: 'Голосовой ввод', saySomething: 'Скажите что-нибудь...', processingVoice: 'Обработка...',
+  confirmOperation: 'Подтвердить операцию', changeOperation: 'Изменить', voiceDetected: 'Распознано:',
+  suggestedCategory: 'Категория', voiceConfirmHint: 'Проверьте данные перед сохранением',
 };
 
 

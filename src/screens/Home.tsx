@@ -10,13 +10,15 @@ import { cx, CatIcon, Num, BottomSheet, BigButton, SPRING } from '@/components/u
 import { tr } from '@/lib/i18n';
 import { OpRow } from './Ops';
 import { InsightsBody } from './Insights';
+import { VoiceInputSheet } from '@/components/VoiceInput';
 const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 export default function Home() {
   const { accounts, operations, settings, setSettings } = useData();
   const { push, scope } = useUI();
-  const [period, setPeriod] = useState('all');
+  const [period, setPeriod] = useState('month'); // Default to this month instead of 'all'
   const [menu, setMenu] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
+  const [voiceOpen, setVoiceOpen] = useState(false);
   const scopeAcc = accounts.find((a) => a.id === scope);
   const { s, e } = useMemo(() => periodRange(period, operations, settings.customPeriods), [period, operations, settings.customPeriods]);
   const ops = useMemo(() => scopeOps(operations, scope).filter((o) => { const d = parseISO(o.date); return d >= s && d <= e; }), [operations, scope, s, e]);
@@ -119,9 +121,10 @@ export default function Home() {
           );
         })}
       </div>
-      <FabCluster />
+      <FabCluster onVoice={() => setVoiceOpen(true)} />
       <AnimatePresence>
         {customOpen && <CustomPeriodSheet onClose={() => setCustomOpen(false)} onSaved={(id) => setPeriod(id)} />}
+        {voiceOpen && <VoiceInputSheet onClose={() => setVoiceOpen(false)} />}
       </AnimatePresence>
     </div>
   );
@@ -205,7 +208,7 @@ function InsightsHandle() {
   </>);
 }
 /* ─── FAB-кластер ─── */
-function FabCluster() {
+function FabCluster({ onVoice }: { onVoice?: () => void }) {
   const { settings } = useData();
   const push = useUI((s) => s.push);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -213,7 +216,7 @@ function FabCluster() {
   const go = (id: string) => {
     haptic(10);
     if (id === 'manual') push('add');
-    else if (id === 'voice') push('add', { voice: true });
+    else if (id === 'voice') onVoice?.();
     else fileRef.current?.click();
   };
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {

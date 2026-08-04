@@ -1,7 +1,7 @@
 
 {
-  "name": "Баланс — учёт финансов",
-  "short_name": "Баланс",
+  "name": "ONYX — учёт финансов",
+  "short_name": "ONYX",
   "description": "Локальный учёт доходов и расходов",
   "start_url": "/", "scope": "/", "display": "standalone",
   "orientation": "portrait",

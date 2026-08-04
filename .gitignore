@@ -1,60 +1,59 @@
-```
-# Dependencies
-node_modules/
-
-# Build artifacts
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+*.o
+*.obj
+*.class
+*.exe
+*.dll
+*.so
+*.a
+*.out
 dist/
 build/
-.next/
-out/
+target/
 
-# Logs
-*.log
-
-# Environment variables
+# Dependencies
+node_modules/
+venv/
+.venv/
 .env
 .env.local
 .env.*
 
-# IDE
+# Logs and temp files
+*.log
+*.tmp
+*.swp
+*.swo
+
+# Editors
 .vscode/
 .idea/
+*.swp
+*.swo
 
-# OS
+# System files
 .DS_Store
 Thumbs.db
-
-# Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-env/
-venv/
-ENV/
-.venv/
-
-# Temporary files
-*.tmp
-*.temp
-*.bak
-*.swp
-*~
-.#*
-%*%
 
 # Coverage
 coverage/
 htmlcov/
 .coverage
 
-# Compression
+# Python specific
+.mypy_cache/
+.pytest_cache/
+
+# Gradle
+.gradle/
+
+# Compressed files
 *.zip
-*.tar.gz
-*.tar.bz2
-*.tar.xz
 *.gz
+*.tar
+*.tgz
 *.bz2
 *.xz
 *.7z
@@ -69,26 +68,7 @@ htmlcov/
 *.Z
 *.lz
 *.lzo
-*.tgz
-
-# Compiled files
-*.o
-*.obj
-*.so
-*.a
-*.lib
-*.dll
-*.exe
-*.out
-
-# TypeScript
-*.tsbuildinfo
-*.js.map
-*.d.ts
-*.d.ts.map
-
-# Next.js
-.next/
-out/
-.cache/
-```
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+*.tar.zst

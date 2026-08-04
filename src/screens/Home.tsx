@@ -169,10 +169,10 @@ function InsightsHandle() {
   const dim = useTransform(p, [0, 1], [0, .65]);
   const grab = () => { if (phase === 'idle' && ref.current) { setTop(ref.current.getBoundingClientRect().top); setPhase('live'); } };
   const commit = (vel: number) => {
-    if (p.get() > 0.4 || vel > 500) { haptic(12); setPhase('open'); animate(p, 1, { type: 'spring', stiffness: 240, damping: 30 }); }
-    else animate(p, 0, { type: 'spring', stiffness: 300, damping: 30 }).on('complete', () => setPhase('idle'));
+    if (p.get() > 0.4 || vel > 500) { haptic(12); setPhase('open'); animate(p, 1, { type: 'spring', stiffness: 240, damping: 30, onComplete: () => {} }); }
+    else animate(p, 0, { type: 'spring', stiffness: 300, damping: 30, onComplete: () => setPhase('idle') });
   };
-  const close = () => { setPhase('live'); animate(p, 0, { type: 'spring', stiffness: 240, damping: 32 }).on('complete', () => setPhase('idle')); };
+  const close = () => { setPhase('live'); animate(p, 0, { type: 'spring', stiffness: 240, damping: 32, onComplete: () => setPhase('idle') }); };
   const tap = () => {
     if (phase !== 'idle') return;
     if (ref.current) setTop(ref.current.getBoundingClientRect().top);

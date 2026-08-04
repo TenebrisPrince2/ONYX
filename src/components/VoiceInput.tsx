@@ -24,10 +24,16 @@ export function VoiceInputSheet({ onClose }: { onClose: () => void }) {
   const [phase, setPhase] = useState<'listening' | 'processing' | 'result'>('listening');
   const [result, setResult] = useState<VoiceResult | null>(null);
   const [volume, setVolume] = useState(0);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [silenceStartTime, setSilenceStartTime] = useState<number | null>(null);
   const recognitionRef = useRef<any>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const rafRef = useRef<number>();
+  const silenceTimeoutRef = useRef<NodeJS.Timeout>();
+  
+  const VAD_THRESHOLD = 25;
+  const SILENCE_TIMEOUT = 2000;
 
   const startListening = () => {
     const SR: any = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -39,31 +45,58 @@ export function VoiceInputSheet({ onClose }: { onClose: () => void }) {
 
     const rec = new SR();
     rec.lang = 'ru-RU';
-    rec.interimResults = false;
-    rec.maxAlternatives = 1;
+    rec.interimResults = true;
+    rec.continuous = true;
+    rec.maxAlternatives = 3;
 
     rec.onstart = () => {
       setPhase('listening');
+      setIsSpeaking(false);
+      setSilenceStartTime(null);
       startVolumeMonitoring();
     };
 
     rec.onresult = (e: any) => {
-      const transcript: string = e.results[0][0].transcript;
-      processVoiceInput(transcript);
+      const transcript: string = Array.from(e.results)
+        .map((r: any) => r[0].transcript)
+        .join(' ');
+      
+      setSilenceStartTime(null);
+      setIsSpeaking(true);
+      (rec as any).lastTranscript = transcript;
     };
 
     rec.onerror = (e: any) => {
       stopVolumeMonitoring();
-      setPhase('listening');
       if (e.error === 'no-speech') {
-        showToast('Речь не обнаружена');
+        setSilenceStartTime(null);
+        setIsSpeaking(false);
       } else if (e.error === 'not-allowed') {
         showToast('Доступ к микрофону запрещён');
         onClose();
+      } else if (e.error === 'aborted') {
+        const lastTranscript = (rec as any).lastTranscript || '';
+        if (lastTranscript) {
+          processVoiceInput(lastTranscript);
+          return;
+        }
       }
+      setPhase('listening');
     };
 
     rec.onend = () => {
+      if (phase === 'listening' && isSpeaking && silenceStartTime === null) {
+        try {
+          rec.start();
+        } catch (e) {
+          const lastTranscript = (rec as any).lastTranscript || '';
+          if (lastTranscript) {
+            processVoiceInput(lastTranscript);
+          }
+        }
+        return;
+      }
+      
       stopVolumeMonitoring();
       if (phase === 'listening') {
         setPhase('processing');
@@ -72,6 +105,26 @@ export function VoiceInputSheet({ onClose }: { onClose: () => void }) {
 
     recognitionRef.current = rec;
     rec.start();
+  };
+
+  const checkSilenceAndProcess = () => {
+    const rec = recognitionRef.current;
+    if (!rec || phase !== 'listening') return;
+    
+    const lastTranscript = (rec as any).lastTranscript || '';
+    
+    if (isSpeaking && silenceStartTime !== null) {
+      const silenceDuration = Date.now() - silenceStartTime;
+      if (silenceDuration >= SILENCE_TIMEOUT) {
+        try {
+          rec.stop();
+        } catch (e) {}
+        processVoiceInput(lastTranscript);
+        return;
+      }
+    }
+    
+    silenceTimeoutRef.current = setTimeout(checkSilenceAndProcess, 200);
   };
 
   const startVolumeMonitoring = async () => {
@@ -106,6 +159,35 @@ export function VoiceInputSheet({ onClose }: { onClose: () => void }) {
     analyserRef.current = null;
     setVolume(0);
   };
+
+  // Enhanced VAD: detect silence based on volume monitoring
+  useEffect(() => {
+    if (phase !== 'listening') return;
+    
+    const checkForSilence = () => {
+      // If volume is below threshold, consider it silence
+      if (volume < VAD_THRESHOLD / 128) {
+        if (silenceStartTime === null && isSpeaking) {
+          // Start tracking silence
+          setSilenceStartTime(Date.now());
+        }
+      } else {
+        // Speech detected, reset silence timer
+        if (silenceStartTime !== null) {
+          setSilenceStartTime(null);
+        }
+        setIsSpeaking(true);
+      }
+      
+      rafRef.current = requestAnimationFrame(checkForSilence);
+    };
+    
+    rafRef.current = requestAnimationFrame(checkForSilence);
+    
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
+  }, [phase, volume, isSpeaking, silenceStartTime]);
 
   const processVoiceInput = (text: string) => {
     setPhase('processing');
